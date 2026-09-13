@@ -66,6 +66,6 @@
     <modules>
         <module>gateway</module>
         <module>identity-service</module>
-<!--        <module>expense-service</module>-->
+        <module>expense-service</module>
     </modules>
 </project>

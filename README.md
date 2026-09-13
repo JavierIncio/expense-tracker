@@ -317,6 +317,7 @@ expense-tracker/
 │
 └── README.md
 ```
+
 ---
 
 ## Development
@@ -441,8 +442,8 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 
 ### Phase 2 — Domain Features
 
-- [ ] Categories
-- [ ] Budgets
+- [x] Categories
+- [x] Budgets
 - [ ] Monthly summary
 - [ ] Filtering
 - [ ] Pagination
@@ -464,6 +465,7 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 - [x] Docker networking
 - [ ] Configuration management
 - [x] Health checks
+
 ### Phase 5 — Frontend
 
 - [ ] Angular application

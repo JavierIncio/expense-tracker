@@ -63,5 +63,28 @@ services:
       retries: 12
       start_period: 30s
 
+  expense-service:
+    build:
+      context: ..
+      dockerfile: expense-service/Dockerfile
+    container_name: exptrack_expense
+    ports:
+      - "8082:8082"
+    env_file:
+      - ../.env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/exptrack_db
+      SPRING_DATASOURCE_USERNAME: exptrack
+      SPRING_DATASOURCE_PASSWORD: exptrack_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8082/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
 volumes:
   postgres-data:
