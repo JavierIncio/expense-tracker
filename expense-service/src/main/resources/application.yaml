@@ -1,0 +1,25 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: expense-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/exptrack_db}
+    username: ${SPRING_DATASOURCE_USERNAME:exptrack}
+    password: ${SPRING_DATASOURCE_PASSWORD:exptrack_password}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    table: expense_flyway_schema_history
+    baseline-on-migrate: true
+    baseline-version: 0
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
