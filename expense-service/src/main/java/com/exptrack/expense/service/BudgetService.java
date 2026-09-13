@@ -9,7 +9,9 @@ import com.exptrack.expense.repository.BudgetRepository;
 import com.exptrack.expense.repository.BudgetSpecification;
 import com.exptrack.expense.repository.TransactionRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -31,6 +33,7 @@ public class BudgetService {
 
     /**
      * Lists budgets for a given user based on the provided filter and pagination information.
+     * If no sorting is specified in the pageable, it defaults to sorting by year and month in descending order.
      *
      * @param userId   the ID of the user whose budgets are to be listed
      * @param filter   the filter criteria for listing budgets
@@ -38,6 +41,13 @@ public class BudgetService {
      * @return a page of BudgetResponse objects matching the filter criteria
      */
     public Page<BudgetResponse> list(UUID userId, BudgetFilter filter, Pageable pageable) {
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
+                    Sort.by(Sort.Direction.DESC, "year")
+                            .and(Sort.by(Sort.Direction.DESC, "month")));
+        }
         return budgetRepo.findAll(
                         BudgetSpecification.filterBudget(userId, filter),
                         pageable)

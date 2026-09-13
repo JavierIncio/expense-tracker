@@ -6,6 +6,8 @@ import com.exptrack.expense.service.BudgetService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,32 +24,34 @@ public class BudgetController {
     }
 
     @PostMapping
-    public BudgetResponse createBudget(@AuthenticationPrincipal UserPrincipal user,
-                                       @Valid @RequestBody BudgetRequest request) {
-        return budgetService.create(user.userId(), request);
+    public ResponseEntity<BudgetResponse> createBudget(@AuthenticationPrincipal UserPrincipal user,
+                                                       @Valid @RequestBody BudgetRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(budgetService.create(user.userId(), request));
     }
 
     @GetMapping
-    public Page<BudgetResponse> listBudgets(@AuthenticationPrincipal UserPrincipal user,
-                                            @ModelAttribute BudgetFilter filter,
-                                            Pageable pageable) {
-        return budgetService.list(user.userId(), filter, pageable);
+    public ResponseEntity<Page<BudgetResponse>> listBudgets(@AuthenticationPrincipal UserPrincipal user,
+                                                            @ModelAttribute BudgetFilter filter,
+                                                            Pageable pageable) {
+        return ResponseEntity.ok(budgetService.list(user.userId(), filter, pageable));
     }
 
     @GetMapping("/{id}")
-    public BudgetResponse getBudget(@AuthenticationPrincipal UserPrincipal user,
-                                    @PathVariable UUID id) {
-        return budgetService.find(user.userId(), id);
+    public ResponseEntity<BudgetResponse> getBudget(@AuthenticationPrincipal UserPrincipal user,
+                                                    @PathVariable UUID id) {
+        return ResponseEntity.ok(budgetService.find(user.userId(), id));
     }
 
     @PutMapping("/{id}")
-    public BudgetResponse updateBudget(@AuthenticationPrincipal UserPrincipal user,
-                                       @PathVariable UUID id,
-                                       @Valid @RequestBody BudgetRequest request) {
-        return budgetService.update(user.userId(), id, request);
+    public ResponseEntity<BudgetResponse> updateBudget(@AuthenticationPrincipal UserPrincipal user,
+                                                       @PathVariable UUID id,
+                                                       @Valid @RequestBody BudgetRequest request) {
+        return ResponseEntity.ok(budgetService.update(user.userId(), id, request));
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteBudget(@AuthenticationPrincipal UserPrincipal user,
                              @PathVariable UUID id) {
         budgetService.delete(user.userId(), id);

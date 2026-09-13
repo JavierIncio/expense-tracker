@@ -432,8 +432,8 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 
 ### Phase 1 — Core Backend
 
-- [ ] Create Expense Service
-- [ ] Transaction CRUD
+- [x] Create Expense Services
+- [x] Transaction CRUD
 - [x] PostgreSQL integration
 - [x] JPA/Hibernate
 - [x] Flyway migrations
@@ -444,10 +444,10 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 
 - [x] Categories
 - [x] Budgets
-- [ ] Monthly summary
-- [ ] Filtering
-- [ ] Pagination
-- [ ] Sorting
+- [x] Monthly summary
+- [x] Filtering
+- [x] Pagination
+- [x] Sorting
 
 ### Phase 3 — Authentication
 

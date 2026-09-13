@@ -14,7 +14,9 @@ import com.exptrack.expense.repository.CategoryRepository;
 import com.exptrack.expense.repository.TransactionRepository;
 import com.exptrack.expense.repository.TransactionSpecification;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -39,6 +41,7 @@ public class TransactionService {
 
     /**
      * Lists transactions for a given user based on the provided filter and pagination information.
+     * If no sorting is specified in the pageable, it defaults to sorting by date in descending order.
      *
      * @param userId   the ID of the user whose transactions are to be listed
      * @param filter   the filter criteria for listing transactions
@@ -46,6 +49,12 @@ public class TransactionService {
      * @return a page of TransactionResponse objects matching the filter criteria
      */
     public Page<TransactionResponse> list(UUID userId, TransactionFilter filter, Pageable pageable) {
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
+                    Sort.by(Sort.Direction.DESC, "date"));
+        }
         return transactionRepo.findAll(
                         TransactionSpecification.filterTransaction(userId, filter),
                         pageable)
