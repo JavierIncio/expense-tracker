@@ -90,10 +90,10 @@ public class TransactionService {
 
         if (request.type() != c.getType()) throw new TransactionTypeMismatchException();
 
+        String description = request.description();
         Transaction t = new Transaction(
-                userId, request.type(), request.amount(),
-                request.categoryId(), request.date());
-        t.setDescription(request.description());
+                userId, request.type(), request.amount(), request.categoryId(), request.date(),
+                description == null || description.isEmpty() ? null : description);
 
         transactionRepo.save(t);
 

@@ -42,12 +42,14 @@ public class Transaction {
     protected Transaction() {}
 
     // --- Constructor for creating a new category ---------------------------------------------------------------------
-    public Transaction(UUID userId, TransactionType type, BigDecimal amount, UUID categoryId, LocalDate date) {
+    public Transaction(UUID userId, TransactionType type, BigDecimal amount,
+                       UUID categoryId, LocalDate date, String description) {
         this.userId = userId;
         this.type = type;
         this.amount = amount;
         this.categoryId = categoryId;
         this.date = date;
+        this.description = description;
     }
 
     // --- Getters and setters -----------------------------------------------------------------------------------------
@@ -82,4 +84,5 @@ public class Transaction {
     public Instant getCreatedAt() {return createdAt;}
 
     public void setCreatedAt(Instant createdAt) {this.createdAt = createdAt;}
+
 }
