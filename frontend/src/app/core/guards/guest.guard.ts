@@ -1,14 +1,15 @@
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, UrlTree } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
+import { map, Observable, of } from 'rxjs';
 
-export const guestGuard = (): boolean => {
+export const guestGuard = (): Observable<boolean | UrlTree> => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  if (auth.isAuthenticated()) {
-    router.navigate(['/dashboard']);
-    return false;
-  }
-  return true;
+  if (auth.isAuthenticated()) return of(false);
+
+  return auth
+    .initialize()
+    .pipe(map(() => (auth.isAuthenticated() ? router.createUrlTree(['/dashboard']) : true)));
 };

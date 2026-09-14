@@ -1,14 +1,14 @@
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, UrlTree } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
+import { map, Observable, of } from 'rxjs';
 
-export const authGuard = (): boolean => {
+export const authGuard = (): Observable<boolean | UrlTree> => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  if (!auth.isAuthenticated()) {
-    router.navigate(['/login']);
-    return false;
-  }
-  return true;
+  if (auth.isAuthenticated()) return of(true);
+
+  return auth.initialize().pipe(
+    map(() => auth.isAuthenticated() ? true : router.createUrlTree(['/login'])));
 };

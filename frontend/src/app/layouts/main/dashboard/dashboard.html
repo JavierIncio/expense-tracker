@@ -1,1 +1,22 @@
-<p>dashboard works!</p>
+<div class="flex min-h-screen flex-col items-center justify-center gap-4 bg-base-200">
+  <p>dashboard works!</p>
+  @if (user()) {
+    <p class="text-sm text-base-content/70">
+      Sesión de {{ user()?.email ?? user()?.sub }}
+    </p>
+  }
+  <button
+    type="button"
+    class="btn btn-error btn-outline"
+    (click)="onLogout()"
+    [disabled]="loggingOut()"
+  >
+    @if (loggingOut()) {
+      <span class="loading loading-spinner loading-sm"></span>
+      Saliendo...
+    } @else {
+      Salir
+    }
+  </button>
+  <a routerLink="/dashboard" class="sr-only">Dashboard</a>
+</div>

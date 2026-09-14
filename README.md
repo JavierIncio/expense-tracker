@@ -259,7 +259,7 @@ DELETE /api/budgets/{id}
 ### Summary
 
 ```http
-GET /api/summary?month=2026-09
+GET /api/summary/monthly?year=2026&month=9
 ```
 
 ---
@@ -468,8 +468,8 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 
 ### Phase 5 — Frontend
 
-- [ ] Angular application
-- [ ] Authentication screens
+- [x] Angular application
+- [x] Authentication screens
 - [ ] Dashboard
 - [ ] Transaction management
 - [ ] Categories
