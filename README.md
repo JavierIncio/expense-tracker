@@ -484,10 +484,10 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 
 ### Phase 7 — Quality
 
-- [ ] Unit tests
-- [ ] Integration tests
+- [x] Unit tests
+- [x] Integration tests
 - [x] Testcontainers
-- [ ] API documentation
+- [x] API documentation
 - [x] Docker Compose
 - [x] GitHub Actions
 - [ ] Production-ready configuration
