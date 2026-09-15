@@ -1,0 +1,213 @@
+<div class="flex flex-col gap-6">
+  <header class="flex flex-wrap items-center justify-between gap-2">
+    <h2 class="text-xl font-semibold">Transacciones</h2>
+    <button
+      type="button"
+      class="btn btn-tertiary btn-sm"
+      (click)="openCreate()"
+    ><i class="fa-solid fa-plus"></i>Nueva</button>
+  </header>
+
+  <div class="flex flex-wrap items-end gap-3">
+    <select
+      class="select select-bordered select-sm"
+      (change)="onTypeChange($event)"
+    >
+      <option value="">Todos</option>
+      <option value="INCOME">Ingresos</option>
+      <option value="EXPENSE">Gastos</option>
+    </select>
+    <select
+      class="select select-bordered select-sm"
+      (change)="onCategoryFilterChange($event)"
+    >
+      <option value="">Todas las categorías</option>
+      @for (cat of filterCategories(); track cat.id) {
+      <option [value]="cat.id">{{ cat.name }}</option>
+      }
+    </select>
+    <input
+      type="date"
+      class="input input-bordered input-sm"
+      placeholder="Desde"
+      (change)="onDateChange('from', $event)"
+    />
+    <input
+      type="date"
+      class="input input-bordered input-sm"
+      placeholder="Hasta"
+      (change)="onDateChange('to', $event)"
+    />
+    <button
+      type="button"
+      class="btn btn-ghost btn-sm"
+      (click)="clearFilters()"
+    ><i class="fa-solid fa-filter-circle-xmark"></i>Limpiar</button>
+  </div>
+
+  @if (loading() && !transactions()) {
+  <div class="skeleton h-64 w-full"></div>
+  }
+
+  @if (error(); as err) {
+  <app-error-alert
+    [message]="err"
+    [showRetry]="true"
+    (retry)="load()"
+  />
+  }
+
+  @if (transactions(); as page) {
+  <div class="overflow-x-auto">
+    <table class="table table-zebra">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Importe</th>
+          <th>Categoría</th>
+          <th>Fecha</th>
+          <th>Descripción</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (t of page.content; track t.id) {
+        <tr>
+          <td>
+            <span class="badge gap-1 w-24 justify-center {{ t.type === 'INCOME' ? 'badge-success' : 'badge-error' }}">
+              <i class="fa-solid {{ t.type === 'INCOME' ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' }}"></i>
+              {{ t.type === 'INCOME' ? 'Ingreso' : 'Gasto' }}
+            </span>
+          </td>
+          <td class="{{ t.type === 'INCOME' ? 'text-success' : 'text-error' }}">
+            {{ t.amount | money }}
+          </td>
+          <td>{{ t.categoryId | categoryName: categories() }}</td>
+          <td>{{ t.date }}</td>
+          <td>{{ t.description || '—' }}</td>
+          <td class="flex gap-1">
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs"
+              (click)="openEdit(t)"
+            ><i class="fa-solid fa-pen-to-square"></i>Editar</button>
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs text-error"
+              (click)="onDelete(t)"
+            ><i class="fa-solid fa-trash"></i>Eliminar</button>
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td
+            colspan="6"
+            class="text-center text-base-content/60"
+          >Sin transacciones</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex items-center justify-between">
+    <span class="text-sm text-base-content/60">
+      {{ page.numberOfElements }} de {{ page.totalElements }}
+    </span>
+    <div class="join">
+      <button
+        class="join-item btn btn-sm"
+        [disabled]="page.first"
+        (click)="goToPage(page.number - 1)"
+      ><i class="fa-solid fa-angles-left"></i></button>
+      <button class="join-item btn btn-sm">{{ page.number + 1 }} / {{ page.totalPages }}</button>
+      <button
+        class="join-item btn btn-sm"
+        [disabled]="page.last"
+        (click)="goToPage(page.number + 1)"
+      ><i class="fa-solid fa-angles-right"></i></button>
+    </div>
+  </div>
+  }
+
+  <dialog
+    #modal
+    class="modal"
+    (close)="onModalClose()"
+  >
+    <div class="modal-box">
+      <h3 class="text-lg font-semibold">{{ editing() ? 'Editar' : 'Nueva' }} transacción</h3>
+      <form
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        class="flex flex-col gap-3 mt-4"
+      >
+        <select
+          formControlName="type"
+          class="select select-bordered"
+          (change)="onFormTypeChange($event)"
+        >
+          <option value="INCOME">Ingreso</option>
+          <option value="EXPENSE">Gasto</option>
+        </select>
+
+        <select
+          formControlName="categoryId"
+          class="select select-bordered"
+        >
+          <option value="">Seleccionar categoría</option>
+          @for (cat of filteredCategories(); track cat.id) {
+          <option [value]="cat.id">{{ cat.name }}</option>
+          }
+        </select>
+
+        <input
+          type="number"
+          formControlName="amount"
+          class="input input-bordered"
+          placeholder="Importe"
+          step="0.01"
+          min="0.01"
+        />
+        <input
+          type="date"
+          formControlName="date"
+          class="input input-bordered"
+        />
+        <input
+          type="text"
+          formControlName="description"
+          class="input input-bordered"
+          placeholder="Descripción (opcional)"
+        />
+
+        @if (formError(); as err) {
+        <div
+          role="alert"
+          class="alert alert-error py-2 text-sm"
+        ><span>{{ err }}</span></div>
+        }
+
+        <div class="modal-action">
+          <button
+            type="button"
+            class="btn"
+            (click)="closeModal()"
+          >Cancelar</button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="form.invalid || submitting()"
+          >
+            @if (submitting()) { <span class="loading loading-spinner loading-sm"></span> }
+            {{ editing() ? 'Actualizar' : 'Crear' }}
+          </button>
+        </div>
+      </form>
+    </div>
+    <form
+      method="dialog"
+      class="modal-backdrop"
+    ><button>close</button></form>
+  </dialog>
+</div>

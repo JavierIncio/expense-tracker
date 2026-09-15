@@ -12,11 +12,11 @@ El proyecto es una aplicación web de finanzas personales construida con una arq
 | ---------------------- | ------ | ------------ |
 | `identity-service`     | 8081   | Implementado |
 | `gateway`              | 8080   | Implementado |
-| `expense-service`      | 8082   | Planificado  |
+| `expense-service`      | 8082   | Implementado |
 | `notification-service` | 8083   | Planificado  |
-| `frontend`             | 4200   | Planificado  |
+| `frontend`             | 4200   | Implementado |
 
-El resto de directorios (`expense-service`, `notification-service`, `frontend`, `infrastructure`) existen pero están **vacíos o pendientes** de desarrollo (roadmap: Fase 1 y Fase 6 del README).
+El `notification-service` está **pendiente** (roadmap: Fase 6 del README). El `frontend` está **implementado** (Fases F1–F6 del `docs/guia-frontend.md` cerradas: scaffolding y tema, autenticación, dashboard, y CRUD de transacciones/categorías/presupuestos).
 
 ---
 

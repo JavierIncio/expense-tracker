@@ -1,0 +1,84 @@
+<div class="min-h-screen bg-base-200">
+  <div class="navbar sticky top-0 z-30 bg-base-100 shadow-sm">
+    <div class="navbar-start">
+      <a
+        routerLink="/dashboard"
+        class="btn btn-ghost text-xl"
+      ><i class="fa-solid fa-money-bill-trend-up"></i>Expense Tracker</a>
+    </div>
+
+    <div class="navbar-center hidden md:flex">
+      <ul class="menu menu-horizontal px-1">
+        <li>
+          <a
+            routerLink="/dashboard"
+            routerLinkActive="link-primary"
+          ><i class="fa-solid fa-table-columns fa-fw"></i>Dashboard</a>
+        </li>
+        <li>
+          <a
+            routerLink="/transactions"
+            routerLinkActive="link-primary"
+          ><i class="fa-solid fa-arrow-right-arrow-left fa-fw"></i>Transacciones</a>
+        </li>
+        <li>
+          <a
+            routerLink="/categories"
+            routerLinkActive="link-primary"
+          ><i class="fa-solid fa-tags fa-fw"></i>Categorías</a>
+        </li>
+        <li>
+          <a
+            routerLink="/budgets"
+            routerLinkActive="link-primary"
+          ><i class="fa-solid fa-wallet fa-fw"></i>Presupuestos</a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="navbar-end">
+      @if (user(); as u) {
+      <div class="dropdown dropdown-end">
+        <div
+          tabindex="0"
+          role="button"
+          class="btn btn-ghost normal-case"
+        >
+          <div class="avatar placeholder">
+            <div class="w-8 rounded-full bg-neutral text-neutral-content flex items-center justify-center">
+              <span>{{ u.username.charAt(0).toUpperCase() || u.email.charAt(0).toUpperCase() }}</span>
+            </div>
+          </div>
+          <span class="hidden sm:inline">{{ u.username || u.email }}</span>
+          <i class="fa-solid fa-chevron-down hidden sm:inline"></i>
+        </div>
+        <ul
+          tabindex="0"
+          class="dropdown-content menu rounded-box z-10 w-52 bg-base-100 p-2 shadow"
+        >
+          <li>
+            <button
+              type="button"
+              class="text-error"
+              [disabled]="loggingOut()"
+              (click)="onLogout()"
+            >
+              @if (loggingOut()) {
+              <span class="loading loading-spinner loading-sm"></span>
+              Saliendo...
+              } @else {
+              <i class="fa-solid fa-right-from-bracket"></i>
+              Cerrar sesión
+              }
+            </button>
+          </li>
+        </ul>
+      </div>
+      }
+    </div>
+  </div>
+
+  <main class="container mx-auto p-4">
+    <router-outlet />
+  </main>
+</div>

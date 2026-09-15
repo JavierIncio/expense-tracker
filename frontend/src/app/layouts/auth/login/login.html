@@ -1,0 +1,94 @@
+<div class="hero min-h-screen bg-base-200">
+  <div class="hero-content w-full max-w-sm flex-col">
+    <div class="card w-full bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title justify-center text-2xl"><i class="fa-solid fa-right-to-bracket"></i>Iniciar sesión</h2>
+        <p class="mb-2 text-center text-sm text-base-content/70">
+          Accede a tu cuenta de Expense Tracker
+        </p>
+
+        <form
+          [formGroup]="form"
+          (ngSubmit)="onSubmit()"
+          class="flex flex-col gap-4"
+          novalidate
+        >
+          <div class="form-control">
+            <label
+              class="label"
+              for="login"
+            >
+              <span class="label-text">Email o usuario</span>
+            </label>
+            <input
+              id="login"
+              type="text"
+              formControlName="login"
+              class="input input-bordered w-full"
+              placeholder="usuario@example.com"
+              autocomplete="username"
+            />
+            @if (form.controls.login.invalid && form.controls.login.touched) {
+            <label class="label">
+              <span class="label-text-alt text-error">Campo obligatorio</span>
+            </label>
+            }
+          </div>
+
+          <div class="form-control">
+            <label
+              class="label"
+              for="password"
+            >
+              <span class="label-text">Contraseña</span>
+            </label>
+            <input
+              id="password"
+              type="password"
+              formControlName="password"
+              class="input input-bordered"
+              placeholder="••••••••"
+              autocomplete="current-password"
+            />
+            @if (form.controls.password.invalid && form.controls.password.touched) {
+            <label class="label">
+              <span class="label-text-alt text-error">Campo obligatorio</span>
+            </label>
+            }
+          </div>
+
+          @if (serverError()) {
+          <div
+            role="alert"
+            class="alert alert-error py-2 text-sm"
+          >
+            <span>{{ serverError() }}</span>
+          </div>
+          }
+
+          <button
+            type="submit"
+            class="btn btn-primary w-full"
+            [disabled]="form.invalid || submitting()"
+          >
+            @if (submitting()) {
+            <span class="loading loading-spinner loading-sm"></span>
+            Iniciando sesión...
+            } @else {
+            <i class="fa-solid fa-right-to-bracket"></i>
+            Iniciar sesión
+            }
+          </button>
+        </form>
+
+        <p class="mt-2 text-center text-sm">
+          ¿No tienes cuenta?
+          <a
+            routerLink="/register"
+            class="link link-primary"
+          >Regístrate</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

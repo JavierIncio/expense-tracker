@@ -259,7 +259,7 @@ DELETE /api/budgets/{id}
 ### Summary
 
 ```http
-GET /api/summary?month=2026-09
+GET /api/summary/monthly?year=2026&month=9
 ```
 
 ---
@@ -298,7 +298,7 @@ The messaging layer is intentionally limited to a small number of meaningful use
 ```text
 expense-tracker/
 │
-├── frontend/                   # planned
+├── frontend/                   # Angular SPA (implemented)
 │
 ├── gateway/
 │
@@ -468,12 +468,12 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 
 ### Phase 5 — Frontend
 
-- [ ] Angular application
-- [ ] Authentication screens
-- [ ] Dashboard
-- [ ] Transaction management
-- [ ] Categories
-- [ ] Budgets
+- [x] Angular application
+- [x] Authentication screens
+- [x] Dashboard
+- [x] Transaction management
+- [x] Categories
+- [x] Budgets
 
 ### Phase 6 — Messaging
 
@@ -484,10 +484,10 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 
 ### Phase 7 — Quality
 
-- [ ] Unit tests
-- [ ] Integration tests
+- [x] Unit tests
+- [x] Integration tests
 - [x] Testcontainers
-- [ ] API documentation
+- [x] API documentation
 - [x] Docker Compose
 - [x] GitHub Actions
 - [ ] Production-ready configuration

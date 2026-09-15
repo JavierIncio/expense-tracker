@@ -1,0 +1,180 @@
+<div class="flex flex-col gap-6">
+  <header class="flex flex-wrap items-center justify-between gap-2">
+    <h2 class="text-xl font-semibold">Presupuestos</h2>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="btn btn-outline btn-sm"
+        (click)="prev()"
+        [disabled]="loading()"
+      ><i class="fa-solid fa-caret-left"></i></button>
+      <span class="w-36 text-center text-sm font-medium">{{ monthLabel() }}</span>
+      <button
+        type="button"
+        class="btn btn-outline btn-sm"
+        (click)="next()"
+        [disabled]="loading()"
+      ><i class="fa-solid fa-caret-right"></i></button>
+    </div>
+    <button
+      type="button"
+      class="btn btn-tertiary btn-sm"
+      (click)="openCreate()"
+    ><i class="fa-solid fa-plus"></i>Nuevo</button>
+  </header>
+
+  @if (loading() && !budgets()) {
+  <div class="skeleton h-48 w-full"></div>
+  }
+
+  @if (error(); as err) {
+  <app-error-alert
+    [message]="err"
+    [showRetry]="true"
+    (retry)="load()"
+  />
+  }
+
+  @if (budgets(); as page) {
+  <div class="overflow-x-auto">
+    <table class="table table-zebra">
+      <thead>
+        <tr>
+          <th>Categoría</th>
+          <th>Año</th>
+          <th>Mes</th>
+          <th>Importe</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (b of page.content; track b.id) {
+        <tr>
+          <td>{{ b.categoryId | categoryName: categories() }}</td>
+          <td>{{ b.year }}</td>
+          <td>{{ monthName(b.month) }}</td>
+          <td>{{ b.amount | money }}</td>
+          <td class="flex gap-1">
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs"
+              (click)="openEdit(b)"
+            ><i class="fa-solid fa-pen-to-square"></i>Editar</button>
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs text-error"
+              (click)="onDelete(b)"
+            ><i class="fa-solid fa-trash"></i>Eliminar</button>
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td
+            colspan="5"
+            class="text-center text-base-content/60"
+          >Sin presupuestos este mes</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex items-center justify-between">
+    <span class="text-sm text-base-content/60">
+      {{ page.numberOfElements }} de {{ page.totalElements }}
+    </span>
+    <div class="join">
+      <button
+        class="join-item btn btn-sm"
+        [disabled]="page.first"
+        (click)="goToPage(page.number - 1)"
+      ><i class="fa-solid fa-angles-left"></i></button>
+      <button class="join-item btn btn-sm">{{ page.number + 1 }} / {{ page.totalPages }}</button>
+      <button
+        class="join-item btn btn-sm"
+        [disabled]="page.last"
+        (click)="goToPage(page.number + 1)"
+      ><i class="fa-solid fa-angles-right"></i></button>
+    </div>
+  </div>
+  }
+
+  <dialog
+    #modal
+    class="modal"
+    (close)="onModalClose()"
+  >
+    <div class="modal-box">
+      <h3 class="text-lg font-semibold">{{ editing() ? 'Editar' : 'Nuevo' }} presupuesto</h3>
+      <form
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        class="flex flex-col gap-3 mt-4"
+      >
+        <select
+          formControlName="categoryId"
+          class="select select-bordered"
+        >
+          <option value="">Seleccionar categoría de gasto</option>
+          @for (cat of expenseCategories(); track cat.id) {
+          <option [value]="cat.id">{{ cat.name }}</option>
+          }
+        </select>
+
+        <input
+          type="number"
+          formControlName="year"
+          class="input input-bordered"
+          placeholder="Año"
+          min="2000"
+          max="2100"
+        />
+
+        <select
+          formControlName="month"
+          class="select select-bordered"
+        >
+          @for (m of months; track m) {
+          <option [value]="m">{{ monthName(m) }}</option>
+          }
+        </select>
+
+        <input
+          type="number"
+          formControlName="amount"
+          class="input input-bordered"
+          placeholder="Importe"
+          step="0.01"
+          min="0.01"
+        />
+
+        @if (formError(); as err) {
+        <div
+          role="alert"
+          class="alert alert-error py-2 text-sm"
+        ><span>{{ err }}</span></div>
+        }
+
+        <div class="modal-action">
+          <button
+            type="button"
+            class="btn"
+            (click)="closeModal()"
+          >Cancelar</button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="form.invalid || submitting()"
+          >
+            @if (submitting()) { <span class="loading loading-spinner loading-sm"></span> }
+            {{ editing() ? 'Actualizar' : 'Crear' }}
+          </button>
+        </div>
+      </form>
+    </div>
+    <form
+      method="dialog"
+      class="modal-backdrop"
+    ><button>close</button></form>
+  </dialog>
+</div>

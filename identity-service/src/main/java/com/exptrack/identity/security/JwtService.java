@@ -109,6 +109,7 @@ public class JwtService {
                 .subject(user.getId().toString())
                 .claim("type", type)
                 .claim("email", user.getEmail())
+                .claim("username", user.getUsername())
                 .claim("roles", user.getRoles().stream().map(Enum::name).toList())
                 .claim("jti", UUID.randomUUID().toString())
                 .issuer(issuer)
