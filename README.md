@@ -298,7 +298,7 @@ The messaging layer is intentionally limited to a small number of meaningful use
 ```text
 expense-tracker/
 │
-├── frontend/                   # planned
+├── frontend/                   # Angular SPA (implemented)
 │
 ├── gateway/
 │
@@ -470,10 +470,10 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 
 - [x] Angular application
 - [x] Authentication screens
-- [ ] Dashboard
-- [ ] Transaction management
-- [ ] Categories
-- [ ] Budgets
+- [x] Dashboard
+- [x] Transaction management
+- [x] Categories
+- [x] Budgets
 
 ### Phase 6 — Messaging
 

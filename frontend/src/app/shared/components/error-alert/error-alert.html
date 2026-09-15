@@ -1,0 +1,15 @@
+<div
+  role="alert"
+  class="alert alert-error shadow-sm"
+>
+  <span>{{ message() }}</span>
+  @if (showRetry()) {
+  <button
+    type="button"
+    class="btn btn-sm btn-outline"
+    (click)="retry.emit()"
+  >
+    Reintentar
+  </button>
+  }
+</div>

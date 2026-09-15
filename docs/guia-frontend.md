@@ -10,10 +10,10 @@ Guía de desarrollo del frontend Angular del Expense Tracker. Documenta qué se 
 | ---- | --------- | ------ |
 | F1   | Scaffolding, tema, routing, infraestructura base | ✅ Cerrada |
 | F2   | Autenticación: core (service, interceptor, guards), login/register | ✅ Cerrada |
-| F3   | Shell de la app + Dashboard | 📋 Planificada (sin empezar) |
-| F4   | CRUD Transacciones | 📋 Planificada |
-| F5   | CRUD Categorías | 📋 Planificada |
-| F6   | CRUD Presupuestos | 📋 Planificada |
+| F3   | Shell de la app + Dashboard | ✅ Cerrada |
+| F4   | CRUD Transacciones | ✅ Cerrada |
+| F5   | CRUD Categorías | ✅ Cerrada |
+| F6   | CRUD Presupuestos | ✅ Cerrada |
 
 ---
 
@@ -22,14 +22,14 @@ Guía de desarrollo del frontend Angular del Expense Tracker. Documenta qué se 
 - **Angular 21** standalone, componentes señal (Signals) para estado local, lazy loading por ruta.
 - **Tailwind CSS v4 + daisyUI 5.7.37**, tema **corporate** activado con `data-theme` en `index.html` + lista de themes en `styles.css`.
 - **ng2-charts 10 + chart.js 4.5.1 + @angular/cdk 21.2.14** para los gráficos del dashboard (opción A: "ng2-charts + CDK").
-- **Vitest** como runner de tests (`ng test`), un solo spec base (`app.spec.ts`).
+- **Vitest** como runner de tests (`ng test`); specs actuales: `app`, `money.pipe`, `http-error`, `main-shell` (8 tests).
 - **Access token**: solo en memoria (signal privada en `AuthService`), nunca en localStorage.
 - **Refresh token**: cookie HttpOnly `refresh_token`; se envía automáticamente (same-origin vía proxy). Nunca usar `withCredentials`.
 - **URL base**: `environment.apiUrl = '/api'` → proxy `/api` → `http://localhost:8080` (gateway).
 - **Formularios**: Reactive Forms clásicos (no signals-based forms).
 - **Moneda configurable**: `environment.locale='es-ES'`, `environment.currency='EUR'` → `Intl.NumberFormat` para formatear importes.
 - Aliases tsconfig: `@core/*` → `src/app/core/*`, `@features/*` → `src/app/layouts/*`, `@shared/*` → `src/app/shared/*`, `@env/*` → `src/environments/*`.
-  - ⚠️ `@shared/*` apunta a `src/app/shared/` que **aún no existe**; se crea en F3.
+  - `@shared/*` se crea en F3 (pipes, utils, componentes reutilizables).
 
 ---
 
@@ -53,7 +53,11 @@ frontend/
 │   │   │   │   ├── budget.models.ts
 │   │   │   │   └── summary.models.ts   # MonthlySummaryResponse, CategorySummary
 │   │   │   ├── services/
-│   │   │   │   └── auth.service.ts     # signals, login/register/logout/refresh/initialize
+│   │   │   │   ├── auth.service.ts     # signals, login/register/logout/refresh/initialize
+│   │   │   │   ├── summary.service.ts  # GET /api/summary/monthly
+│   │   │   │   ├── transaction.service.ts  # CRUD + listado paginado (sort date,desc)
+│   │   │   │   ├── category.service.ts     # CRUD + list (sin paginar)
+│   │   │   │   └── budget.service.ts       # CRUD + listado paginado (sort year+month desc)
 │   │   │   ├── interceptors/
 │   │   │   │   └── auth-interceptor.ts # Bearer + 401→refresh (single-flight) + retry 1×
 │   │   │   ├── guards/
@@ -61,17 +65,27 @@ frontend/
 │   │   │   │   └── guest.guard.ts      # asíncrono: invertido
 │   │   │   └── utils/
 │   │   │       └── jwt.ts              # decodeJwt, isTokenExpired
+│   │   ├── shared/                     # creado en F3
+│   │   │   ├── pipes/
+│   │   │   │   ├── money.pipe.ts       # Intl es-ES/EUR (selector `money`)
+│   │   │   │   └── category-name.pipe.ts  # categoryId → nombre (selector `categoryName`)
+│   │   │   ├── utils/
+│   │   │   │   ├── month.ts            # Month, currentMonth, shiftMonth, formatMonthLabel, monthName
+│   │   │   │   └── http-error.ts       # HttpErrorResponse → ErrorResponse.message
+│   │   │   └── components/
+│   │   │       └── error-alert/        # alert alert-error + retry opcional
 │   │   └── layouts/
 │   │       ├── auth/
 │   │       │   ├── auth.routes.ts      # /login, /register (guestGuard)
 │   │       │   ├── login/              # Reactive Form + daisyUI ✅
 │   │       │   └── register/           # Reactive Form + daisyUI ✅
 │   │       └── main/
-│   │           ├── main.routes.ts      # authGuard + 4 rutas hijas
-│   │           ├── dashboard/          # placeholder + botón "Salir" TEMPORAL (F2)
-│   │           ├── transactions/       # placeholder "<p>transactions works!</p>"
-│   │           ├── categories/         # placeholder
-│   │           └── budgets/            # placeholder
+│   │           ├── main.routes.ts      # authGuard + MainShell (layout) + 4 hijos
+│   │           ├── main-shell/         # navbar, dropdown usuario/logout, <router-outlet/> ✅
+│   │           ├── dashboard/          # resumen mensual + dónut + barras presupuesto ✅
+│   │           ├── transactions/       # tabla paginada + filtros + modal CRUD ✅
+│   │           ├── categories/         # lista + modal CRUD (409 "en uso") ✅
+│   │           └── budgets/            # vista mensual + paginación + modal CRUD ✅
 │   └── environments/
 │       ├── environment.ts              # apiUrl '/api', locale 'es-ES', currency 'EUR'
 │       └── environment.development.ts
@@ -118,68 +132,48 @@ frontend/
 
 ---
 
-## Fase 3 (siguiente) — Shell de la app + Dashboard
+## Fase 3 — Shell de la app + Dashboard ✅ Cerrada
 
-> ⚠️ **Pendiente de implementación.** Este es el plan, no el trabajo hecho.
+> **Qué incluye** (implementado y verificado): carpeta `shared/` creada, layout `MainShell` con navbar daisyUI + dropdown de usuario, `SummaryService` y dashboard con resumen mensual, dónut y barras de presupuesto.
 
-### 3.1 Crear `src/app/shared/` (primera vez)
-- `pipes/currency.pipe.ts`: `Intl.NumberFormat(locale, { style:'currency', currency })` con valores de `@env`.
-- `utils/month.ts`: helpers fecha → `{ year, month }`, formatea "septiembre 2026", prev/next.
-- `utils/http-error.ts`: extraer `HttpErrorResponse → message` (deduplica lógica de login/register).
-- `components/alert-error.ts`: aero de error reutilizable (daisyUI `alert alert-error`).
-- `components/loading-spinner.ts` o uso directo de `loading loading-spinner`.
-
-### 3.2 Shell (`layouts/main/main-shell/`)
-- Componente `MainShell` (layout) con:
-  - Navbar daisyUI: título "Expense Tracker", enlaces Dashboard/Transacciones/Categorías/Presupuestos con `routerLinkActive` para el activo, dropdown de usuario en `navbar-end` con `currentUser().email` y botón "Cerrar sesión".
-  - `<router-outlet/>` dentro de `<main class="container mx-auto p-4">`.
-  - Logout → `auth.logout()` → navigate `/login` (mover lógica del botón temporal del dashboard).
-- Confirmar clase activa de daisyUI: `link link-primary` con `routerLinkActive` (o combinación navbar/tab).
-- `main.routes.ts`: cargar `MainShell` como componente del nodo raíz y dejar los 4 hijos tal cual (authGuard ya está en el padre).
-
-### 3.3 Dashboard (reemplaza el placeholder)
-- `core/services/summary.service.ts`: `getMonthlySummary(year, month)` → `MonthlySummaryResponse`.
-- Estado del componente con signals: `displayMonth` (`{year, month}` inicial = mes actual), `summary`, `loading`, `error`.
-- Navegación de mes: botones ◀ ▶ + etiqueta con nombre del mes (descartar `<input type="month">` para no pelear con el estilo daisyUI).
-- Tarjetas `stat`: Extra (balance), Ingresos, Gastos (color acorde al signo).
-- Dónut ng2-charts: `baseChart` con gastos por categoría (`summary.byCategory` filtrando `type='EXPENSE'`); usar colores daisyUI del tema (tailwind palette).
-- Barras presupuesto vs real: por cada `CategorySummary` con `budgetAmount != null`, `progress` con clase según `budgetStatus` (WITHIN_LIMIT → primary, EXCEEDED → error).
-- Estados: `loading` → skeletons/spinner; `error` → `alert-error` con botón reintentar.
-- Eliminar el botón "Salir" temporal del dashboard (pasa al shell).
-
-### 3.4 Limpieza F2
-- Revisar que `dashboard.ts` ya no inyecte `AuthService` (lo hace el shell).
-- Añadir tests Vitest mínimos: pipe moneda y `MainShell` (render + logout con mock de auth).
-
-### 3.5 Verificación F3
-1. Login → `/dashboard` con navbar; refresco de sesión en F5.
-2. Navbar: 4 enlaces navegables, activo resaltado; dropdown muestra email.
-3. Dashboard: selección de mes, 3 números, dónut y barras según datos; estados loading/error controlados (probar con el backend parado).
-4. Salir desde el navbar limpia sesión y redirige a `/login`.
-5. Generar datos de prueba (transacciones vía API) para ver el dashboard completo.
+- **`shared/`**: `MoneyPipe` (selector `money`, `Intl.NumberFormat` con values de `@env`), `month.ts` (meses 1-based, `currentMonth`/`shiftMonth`/`formatMonthLabel`), `http-error.ts` (deduplica el `message` de error), `ErrorAlert` (`alert alert-error` + retry).
+- **`MainShell`** (`layouts/main/main-shell/`): navbar con 4 enlaces + `routerLinkActive="link-primary"`, `<router-outlet/>` en `main`; `onLogout()` → `auth.logout()` → navigate `/login`. Es el `component` del nodo raíz de `main.routes.ts` (el `authGuard` sigue en el padre).
+- **Dashboard**: signals `month`/`summary`/`loading`/`error`; navegación de mes ◀▶ con `shiftMonth`; 3 tarjetas (balance/ingresos/gastos), dónut ng2-charts (`canvas baseChart`), barras `progress` según `budgetStatus`. `load()` se deja **public** para usarlo como handler en el template.
+- **Decisión de formato**: `Intl` es-ES/EUR separa el importe del símbolo con espacio de no ruptura (`\u00A0`) y no agrupa miles hasta 10.000 (`minimumGroupingDigits=2`, p. ej. `1234,50 €`). Los specs deben esperar `\u00A0` en la aserción.
 
 ---
 
-## Fases posteriores (plan a alto nivel)
+## Fases 4–6 — CRUD de transacciones, categorías y presupuestos ✅ Cerradas
+
+> Con F4–F6 el frontend queda **completo** (todas sus pantallas implementadas). Verificado con `npm run build` (AOT) y `npm test` (8 tests) en verde. Warnings benignos: bundle inicial >500 kB (549 kB) y `& -> Empty sub-selector` (cosmético de daisyUI).
 
 ### F4 — Transacciones
-- `core/services/transaction.service.ts` + `category.service.ts` (para resolver nombres y selectores).
-- Tabla paginada (`Page<T>`), filtros (tipo, categoría, rango fechas), ordenación por columnas.
-- Modal daisyUI crear/editar con Reactive Form que cambia el select de categorías según tipo; delete con confirmación.
+- `transaction.service.ts`: `list(filter?, page=0, size=10)` → `Page<TransactionResponse>` con `sort=date,desc`; `get`, `create`, `update`, `delete`.
+- `category.service.ts` (compartida con F5): `list(type?)` → `CategoryResponse[]` (lista completa, no paginada) + CRUD.
+- **`CategoryNamePipe`** (selector `categoryName`): resuelve `categoryId → nombre` contra el array enlazado (`{{ t.categoryId | categoryName: categories() }}`); si no encuentra muestra `—`. Motivo: `TransactionResponse` no incluye el nombre de categoría.
+- Tabla `table-zebra` paginada con pager `join` (label `page.number + 1`); filtros por tipo (recorta el select de categorías), categoría y rango de fechas (`fromDate`/`toDate`); botón Limpiar.
+- Modal crear/editar: signal `typeFilter` sincroniza el select de categorías con el tipo (`onFormTypeChange` resetea `categoryId`); al editar se ajusta al tipo de la fila. Delete con `confirm()`.
 
 ### F5 — Categorías
-- Lista/fichas, modal crear/editar, delete con manejo de 409 ("categoría en uso").
+- Lista completa sin paginación; modal crear/editar (nombre + tipo), delete con `confirm()` y **manejo de 409** ("categoría en uso") vía `httpErrorMessage`.
 
 ### F6 — Presupuestos
-- Vista por mes, formulario con categoría+mes+importe, manejo de 409 (duplicado categoría+mes), columna "gastado" cruzando con summary.
+- `budget.service.ts`: `list(filter?, page, size)` con dos sorts (`year,desc` + `month,desc` vía `HttpParams.append`) + CRUD.
+- Vista mensual: navegación ◀▶ con `shiftMonth` + `monthLabel`; tabla con categoría (pipe), año, mes y importe.
+- Formulario: select **solo categorías EXPENSE**, año [2000–2100], mes 1–12 con `monthName`, importe > 0; **409 duplicado categoría+mes** → mensaje inline en el formulario.
+- ⚠️ **Desviación del plan**: se descarta la columna "gastado" cruzando con summary (el dashboard ya cruza presupuesto vs. gastos; la vista de presupuestos se mantiene simple por mes).
+
+### Detalles técnicos relevantes
+- **Queries signal en plantillas**: `viewChild<stringRef>` devuelve un **`ElementRef`** en runtime (no el nodo DOM). Llamar `showModal()`/`close()` (o la auto-desusenvuelta `modal?.close()` en plantilla) lanza "not a function". **Patrón correcto**: tipar `viewChild<ElementRef<HTMLDialogElement>>('modal')` y usar `this.modal()?.nativeElement.showModal()` en TS; para cerrar desde la plantilla exponer un método `closeModal()` → `this.modal()?.nativeElement.close()`.
+- **Controles de importe**: se tipan `amount: [null as number | null, ...]` para poder `patchValue({ amount: b.amount })` desde respuestas (si no, el tipo queda `null` literal y el build falla).
+- `monthName` (función de `shared/utils/month.ts`) se expone como propiedad `readonly monthName = monthName;` en `Budgets` para poder llamarla desde la plantilla.
 
 ---
 
 ## Checklist general frontend
 
 - Antes de cada fase: `npm run build` (AOT) + `npm test` en verde.
-- Todos los importes de moneda pasan por el pipe `currency` (nunca `toFixed` a mano).
+- Todos los importes de moneda pasan por el pipe `money` (nunca `toFixed` a mano).
 - Los errores HTTP se presentan con `ErrorResponse.message` vía `http-error.ts`.
 - El access token se mantiene en memoria; nunca persistir.
 - Respetar las rutas con prefijo `/api` (proxy) — sin él la petición cae al dev server y devuelve HTML.
-- `@shared/*` exige crear por primera vez `src/app/shared/` en F3.

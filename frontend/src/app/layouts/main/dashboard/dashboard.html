@@ -1,22 +1,110 @@
-<div class="flex min-h-screen flex-col items-center justify-center gap-4 bg-base-200">
-  <p>dashboard works!</p>
-  @if (user()) {
-    <p class="text-sm text-base-content/70">
-      Sesión de {{ user()?.email ?? user()?.sub }}
-    </p>
-  }
-  <button
-    type="button"
-    class="btn btn-error btn-outline"
-    (click)="onLogout()"
-    [disabled]="loggingOut()"
-  >
-    @if (loggingOut()) {
-      <span class="loading loading-spinner loading-sm"></span>
-      Saliendo...
-    } @else {
-      Salir
+<div class="flex flex-col gap-6">
+  <header class="flex flex-wrap items-center justify-between gap-2">
+    <h2 class="text-xl font-semibold">Dashboard</h2>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="btn btn-outline btn-sm"
+        (click)="prev()"
+        [disabled]="loading()"
+      ><i class="fa-solid fa-caret-left"></i></button>
+      <span class="w-36 text-center text-sm font-medium">{{ monthLabel() }}</span>
+      <button
+        type="button"
+        class="btn btn-outline btn-sm"
+        (click)="next()"
+        [disabled]="loading()"
+      ><i class="fa-solid fa-caret-right"></i></button>
+    </div>
+  </header>
+
+  @if (loading() && !summary()) {
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    @for (_ of [1, 2, 3]; track $index) {
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body">
+        <div class="skeleton h-6 w-24"></div>
+        <div class="skeleton h-10 w-32"></div>
+      </div>
+    </div>
     }
-  </button>
-  <a routerLink="/dashboard" class="sr-only">Dashboard</a>
+  </div>
+  }
+
+  @if (error(); as err) {
+  <app-error-alert
+    [message]="err"
+    [showRetry]="true"
+    (retry)="load()"
+  />
+  }
+
+  @if (summary(); as s) {
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body">
+        <p class="text-sm text-base-content/60">Balance</p>
+
+        <p class="text-2xl font-semibold {{ s.balance >= 0 ? 'text-success' : 'text-error' }}">{{ s.balance | money }}
+        </p>
+      </div>
+    </div>
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body">
+        <p class="text-sm text-base-content/60">Ingresos</p>
+        <p class="text-2xl font-semibold">{{ s.totalIncome | money }}</p>
+      </div>
+    </div>
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body">
+        <p class="text-sm text-base-content/60">Gastos</p>
+        <p class="text-2xl font-semibold text-error">{{ s.totalExpense | money }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body">
+        <h3 class="text-base font-semibold">Gastos por categoría</h3>
+        @if (expenseCategories().length) {
+        <div class="h-64">
+          <canvas
+            baseChart
+            type="doughnut"
+            [data]="chartData()"
+            [options]="chartOptions"
+          ></canvas>
+        </div>
+        } @else {
+        <p class="text-sm text-base-content/60">Sin gastos este mes.</p>
+        }
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body">
+        <h3 class="text-base font-semibold">Presupuesto vs. gastado</h3>
+        @if (budgetRows().length) {
+        @for (row of budgetRows(); track row.categoryId) {
+        <div class="flex flex-col gap-1">
+          <div class="flex items-center justify-between text-sm">
+            <span>{{ row.categoryName }}</span>
+            <span>{{ row.amount | money }} / {{ row.budgetAmount | money }}</span>
+          </div>
+          <progress
+            class="progress {{ row.budgetStatus === 'EXCEEDED' ? 'progress-error' : 'progress-primary' }}"
+            [value]="row.percent"
+            max="100"
+          >
+          </progress>
+        </div>
+        }
+        } @else {
+        <p class="text-sm text-base-content/60">Sin presupuestos este mes.</p>
+        }
+      </div>
+    </div>
+  </div>
+  }
 </div>

@@ -1,10 +1,12 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '@core/guards/auth.guard';
+import { MainShell } from './main-shell/main-shell';
 
 export const mainRoutes: Routes = [
   {
     path: '',
     canActivate: [authGuard],
+    component: MainShell,
     children: [
       {
         path: 'dashboard',

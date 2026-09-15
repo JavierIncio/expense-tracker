@@ -2,6 +2,7 @@ export interface JwtPayload {
   sub: string;
   type: string;
   email: string;
+  username: string;
   roles: string[];
   jti: string;
   iss: string;
@@ -24,19 +25,13 @@ export function decodeJwt(token: string): JwtPayload | null {
     const base64Url = parts[1];
 
     // Convert Base64URL -> Base64
-    const base64 = base64Url
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
 
     // Add padding if necessary
-    const padded = base64.padEnd(
-      Math.ceil(base64.length / 4) * 4,
-      '='
-    );
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
 
     const json = atob(padded);
     return JSON.parse(json) as JwtPayload;
-
   } catch {
     return null;
   }
@@ -49,9 +44,6 @@ export function decodeJwt(token: string): JwtPayload | null {
  * @param bufferSec Optional buffer time in seconds to account for clock skew. Default is 5 seconds.
  * @returns
  */
-export function isTokenExpired(
-  payload: JwtPayload,
-  bufferSec = 5
-): boolean {
+export function isTokenExpired(payload: JwtPayload, bufferSec = 5): boolean {
   return payload.exp <= Math.floor(Date.now() / 1000) + bufferSec;
 }

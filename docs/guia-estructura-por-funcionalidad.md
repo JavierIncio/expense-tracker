@@ -14,9 +14,9 @@ El proyecto es una aplicación web de finanzas personales construida con una arq
 | `gateway`              | 8080   | Implementado |
 | `expense-service`      | 8082   | Implementado |
 | `notification-service` | 8083   | Planificado  |
-| `frontend`             | 4200   | En desarrollo |
+| `frontend`             | 4200   | Implementado |
 
-El `notification-service` está **pendiente** (roadmap: Fase 6 del README). El `frontend` está en desarrollo (Fases F1–F2 cerradas: scaffolding, tema daisyUI, routing, autenticación y pantallas login/register; ver `docs/guia-frontend.md`).
+El `notification-service` está **pendiente** (roadmap: Fase 6 del README). El `frontend` está **implementado** (Fases F1–F6 del `docs/guia-frontend.md` cerradas: scaffolding y tema, autenticación, dashboard, y CRUD de transacciones/categorías/presupuestos).
 
 ---
 

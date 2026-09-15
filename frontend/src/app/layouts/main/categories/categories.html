@@ -1,1 +1,124 @@
-<p>categories works!</p>
+<div class="flex flex-col gap-6">
+  <header class="flex flex-wrap items-center justify-between gap-2">
+    <h2 class="text-xl font-semibold">Categorías</h2>
+    <button
+      type="button"
+      class="btn btn-tertiary btn-sm"
+      (click)="openCreate()"
+    ><i class="fa-solid fa-plus"></i>Nueva</button>
+  </header>
+
+  @if (loading() && !categories().length) {
+  <div class="skeleton h-48 w-full"></div>
+  }
+
+  @if (error(); as err) {
+  <app-error-alert
+    [message]="err"
+    [showRetry]="true"
+    (retry)="load()"
+  />
+  }
+
+  @if (categories().length; as count) {
+  <div class="overflow-x-auto">
+    <table class="table table-zebra">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of categories(); track c.id) {
+        <tr>
+          <td>{{ c.name }}</td>
+          <td>
+            <span class="badge gap-1 w-24 justify-center {{ c.type === 'INCOME' ? 'badge-success' : 'badge-error' }}">
+              <i class="fa-solid {{ c.type === 'INCOME' ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' }}"></i>
+              {{ c.type === 'INCOME' ? 'Ingreso' : 'Gasto' }}
+            </span>
+          </td>
+          <td class="flex gap-1">
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs"
+              (click)="openEdit(c)"
+            ><i class="fa-solid fa-pen-to-square"></i>Editar</button>
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs text-error"
+              (click)="onDelete(c)"
+            ><i class="fa-solid fa-trash"></i>Eliminar</button>
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td
+            colspan="3"
+            class="text-center text-base-content/60"
+          >Sin categorías</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+
+  <dialog
+    #modal
+    class="modal"
+    (close)="onModalClose()"
+  >
+    <div class="modal-box">
+      <h3 class="text-lg font-semibold">{{ editing() ? 'Editar' : 'Nueva' }} categoría</h3>
+      <form
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        class="flex flex-col gap-3 mt-4"
+      >
+        <input
+          type="text"
+          formControlName="name"
+          class="input input-bordered"
+          placeholder="Nombre de la categoría"
+        />
+        <select
+          formControlName="type"
+          class="select select-bordered"
+        >
+          <option value="INCOME">Ingreso</option>
+          <option value="EXPENSE">Gasto</option>
+        </select>
+
+        @if (formError(); as err) {
+        <div
+          role="alert"
+          class="alert alert-error py-2 text-sm"
+        ><span>{{ err }}</span></div>
+        }
+
+        <div class="modal-action">
+          <button
+            type="button"
+            class="btn"
+            (click)="closeModal()"
+          >Cancelar</button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="form.invalid || submitting()"
+          >
+            @if (submitting()) { <span class="loading loading-spinner loading-sm"></span> }
+            {{ editing() ? 'Actualizar' : 'Crear' }}
+          </button>
+        </div>
+      </form>
+    </div>
+    <form
+      method="dialog"
+      class="modal-backdrop"
+    ><button>close</button></form>
+  </dialog>
+</div>
