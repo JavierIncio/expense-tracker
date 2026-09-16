@@ -76,19 +76,23 @@ The application uses a small microservices architecture:
         │      :8081      │   │      :8082      │
         └────────┬────────┘   └────────┬────────┘
                  │                     │
+                 │                publishes
+                 │                domain events
+                 │                     │
+                 │                     ▼
+                 │              ┌──────────────┐
+                 │              │   RabbitMQ   │
+                 │              └──────┬───────┘
+                 │                     ▼
+                 │            ┌────────────────────┐
+                 │            │Notification Service│
+                 │            │        :8083       │
+                 │            └────────┬───────────┘
                  ▼                     ▼
-           PostgreSQL             PostgreSQL
-
-                         Optional
-                            │
-                            ▼
-                    ┌─────────────┐
-                    │    RabbitMQ │
-                    └──────┬──────┘
-                           │
-                           ▼
-                   Notification Service
+                 PostgreSQL (shared instance)
 ```
+
+The three application services share a single PostgreSQL instance. Prometheus scrapes `/actuator/prometheus` from all four services (including the Gateway) and Grafana visualises the metrics.
 
 ### Services
 
@@ -113,7 +117,7 @@ Responsible for:
 
 #### API Gateway
 
-Provides a single entry point for the frontend and routes requests to the appropriate service.
+Provides a single entry point for the frontend and routes requests to the appropriate service. Validates the JWT and forwards the authenticated user id (`X-User-Id`), and enforces per-client rate limiting with Bucket4j (20 requests/min for `/api/auth`, 100 requests/min for the remaining routes).
 
 #### Notification Service
 
@@ -190,9 +194,13 @@ Notification
 - REST
 - Microservices
 - Spring Cloud Gateway
+- Bucket4j
 - RabbitMQ
 - Docker
 - Docker Compose
+- Micrometer
+- Prometheus
+- Grafana
 
 ### Testing
 
@@ -266,6 +274,7 @@ GET /api/summary/monthly?year=2026&month=9
 
 ```http
 GET   /api/notifications
+GET   /api/notifications/unread-count
 PATCH /api/notifications/{id}/read
 ```
 
@@ -279,9 +288,9 @@ Selected domain events are published through RabbitMQ.
 
 The Expense Service publishes to the `expense.events` topic exchange with the following routing keys:
 
-| Routing key           | Payload        |
-| --------------------- | -------------- |
-| `budget.exceeded`     | `BudgetExceededEvent`    |
+| Routing key           | Payload                   |
+| --------------------- | ------------------------- |
+| `budget.exceeded`     | `BudgetExceededEvent`     |
 | `transaction.created` | `TransactionCreatedEvent` |
 | `transaction.deleted` | `TransactionDeletedEvent` |
 
@@ -315,7 +324,7 @@ The Notification Service consumes these events from three durable queues bound t
 ```text
 expense-tracker/
 │
-├── frontend/                   # Angular SPA (implemented)
+├── frontend/                   # Angular SPA
 │
 ├── gateway/
 │
@@ -326,7 +335,15 @@ expense-tracker/
 ├── notification-service/
 │
 ├── infrastructure/
-│   └── docker-compose.yaml
+│   ├── docker-compose.yaml
+│   ├── prometheus/
+│   │   └── prometheus.yml
+│   └── grafana/
+│       └── provisioning/
+│           └── datasources/
+│               └── datasource.yml
+│
+├── .env.example
 │
 ├── .github/
 │   └── workflows/
@@ -353,6 +370,24 @@ expense-tracker/
 ```bash
 docker compose -f infrastructure/docker-compose.yaml --env-file .env up -d
 ```
+
+Prometheus and Grafana are part of the stack:
+
+| Tool       | URL                   | Credentials                                              |
+| ---------- | --------------------- | -------------------------------------------------------- |
+| Prometheus | http://localhost:9090 | —                                                        |
+| Grafana    | http://localhost:3000 | `admin` / `GF_SECURITY_ADMIN_PASSWORD` (default `admin`) |
+
+#### Monitoring
+
+Each service exposes metrics with Micrometer on `/actuator/prometheus` (`health`, `info` and `prometheus` are exposed and allowed without authentication so Prometheus can scrape them). Prometheus scrapes all four services every 15 seconds:
+
+- Gateway (`gateway:8080`)
+- Identity Service (`identity-service:8081`)
+- Expense Service (`expense-service:8082`)
+- Notification Service (`notification-service:8083`)
+
+To visualise the metrics in Grafana, import the community dashboard **JVM (Micrometer)** (ID `4701`) via Dashboards → New → Import, using the pre-provisioned Prometheus datasource. Useful metrics: `http_server_requests_seconds` (latency by endpoint), `jvm_memory_used_bytes` (heap/non-heap), `process_cpu_usage`. Traffic can be generated through the gateway (`POST /api/auth/login`, `GET /api/summary/monthly?year=2026&month=9` with a Bearer token).
 
 ### Running the backend
 
@@ -414,7 +449,17 @@ Run the backend tests with:
 ./mvnw test
 ```
 
-Integration tests use Testcontainers to run the required infrastructure in isolated containers.
+Integration tests (`*IT`) use Testcontainers to run the required infrastructure in isolated containers and are executed by the Maven Failsafe plugin during the verify phase:
+
+```bash
+./mvnw verify
+```
+
+Full build (all modules, tests and packaging):
+
+```bash
+./mvnw clean verify
+```
 
 ---
 
@@ -440,6 +485,8 @@ The main learning goals are:
 - Microservices
 - API Gateway
 - Asynchronous messaging
+- Rate limiting
+- Observability (Micrometer, Prometheus, Grafana)
 - Docker
 - CI/CD
 
@@ -482,7 +529,7 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 - [x] API Gateway
 - [x] Service-to-service communication
 - [x] Docker networking
-- [ ] Configuration management
+- [x] Configuration management
 - [x] Health checks
 
 ### Phase 5 — Frontend
@@ -493,6 +540,7 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 - [x] Transaction management
 - [x] Categories
 - [x] Budgets
+- [x] Notifications
 
 ### Phase 6 — Messaging
 
@@ -509,10 +557,10 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 - [x] API documentation
 - [x] Docker Compose
 - [x] GitHub Actions
-- [ ] Rate limiting (Bucket4j)
-- [ ] Structured logging and log levels
+- [x] Rate limiting (Bucket4j)
+- [x] Structured logging and log levels
 - [x] Graceful shutdown
-- [ ] Monitoring (Micrometer + Prometheus + Grafana)
+- [x] Monitoring (Micrometer + Prometheus + Grafana)
 
 ---
 

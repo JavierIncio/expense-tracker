@@ -24,6 +24,10 @@ export const mainRoutes: Routes = [
         path: 'budgets',
         loadComponent: () => import('./budgets/budgets').then((m) => m.Budgets),
       },
+      {
+        path: 'notifications',
+        loadComponent: () => import('./notifications/notifications').then((m) => m.Notifications),
+      },
     ],
   },
 ];

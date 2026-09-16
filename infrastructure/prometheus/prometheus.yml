@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 15s
+scrape_configs:
+  - job_name: exptrack
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [gateway:8080, identity-service:8081, expense-service:8082, notification-service:8083]

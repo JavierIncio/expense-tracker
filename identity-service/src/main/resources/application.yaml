@@ -23,9 +23,18 @@ spring:
     timeout-per-shutdown-phase: 30s
 
 management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
   endpoint:
     health:
       show-details: always
+
+logging:
+  level:
+    com.exptrack: INFO
+    org.hibernate.SQL: WARN
 
 app:
   jwt:

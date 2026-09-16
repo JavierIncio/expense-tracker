@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { AuthService } from '@core/services/auth.service';
+import { NotificationService } from '@core/services/notification.service';
 import { JwtPayload } from '@core/utils/jwt';
 import { MainShell } from './main-shell';
 
@@ -29,6 +30,16 @@ describe('MainShell', () => {
         {
           provide: AuthService,
           useValue: { currentUser: user, logout: () => of({}) },
+        },
+        {
+          provide: NotificationService,
+          useValue: {
+            unreadCount: signal(0),
+            latest: signal([]),
+            refresh: () => void 0,
+            reset: () => void 0,
+            markAsRead: () => of(null),
+          },
         },
       ],
     }).compileComponents();

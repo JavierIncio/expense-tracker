@@ -33,10 +33,65 @@
             routerLinkActive="link-primary"
           ><i class="fa-solid fa-wallet fa-fw"></i>Presupuestos</a>
         </li>
+        <li>
+          <a
+            routerLink="/notifications"
+            routerLinkActive="link-primary"
+          ><i class="fa-solid fa-bell fa-fw"></i>Notificaciones</a>
+        </li>
       </ul>
     </div>
 
     <div class="navbar-end">
+      <div class="dropdown dropdown-end">
+        <div
+          tabindex="0"
+          role="button"
+          class="btn btn-ghost btn-circle"
+          aria-label="Notificaciones"
+        >
+          <div class="indicator">
+            <i class="fa-solid fa-bell text-lg"></i>
+            @if (unreadCount() > 0) {
+            <span class="badge indicator-item badge-error badge-xs">{{ unreadCount() }}</span>
+            }
+          </div>
+        </div>
+        <ul
+          tabindex="0"
+          class="dropdown-content menu rounded-box z-10 w-80 bg-base-100 p-2 shadow"
+        >
+          <li class="menu-title">Notificaciones</li>
+          @for (n of latest(); track n.id) {
+          <li>
+            <button
+              type="button"
+              class="flex flex-col items-start gap-1 py-2"
+              [disabled]="n.read || markingRead() === n.id"
+              (click)="markRead(n)"
+            >
+              <span class="text-left text-sm">{{ n.message }}</span>
+              <span class="flex items-center gap-1 text-xs text-base-content/50">
+                @if (!n.read) {
+                <span class="badge badge-warning badge-xs">Nueva</span>
+                }
+              </span>
+            </button>
+          </li>
+          } @empty {
+          <li>
+            <span class="px-4 py-3 text-sm text-base-content/60">Aún no tienes notificaciones.</span>
+          </li>
+          }
+          <li class="mt-1 border-t border-base-300">
+            <a
+              routerLink="/notifications"
+              class="justify-between"
+            ><i class="fa-solid fa-bell"></i>Ver todas</a>
+          </li>
+        </ul>
+      </div>
+
       @if (user(); as u) {
       <div class="dropdown dropdown-end">
         <div

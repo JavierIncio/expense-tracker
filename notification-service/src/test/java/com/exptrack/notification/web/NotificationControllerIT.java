@@ -41,7 +41,7 @@ class NotificationControllerIT extends AbstractNotificationIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].read").value(false))
-                .andExpect(jsonPath("$.content[0].message").value(containsString("100.00")));
+                .andExpect(jsonPath("$.content[0].message").value(containsString("100,00")));
     }
 
     @Test
@@ -70,6 +70,25 @@ class NotificationControllerIT extends AbstractNotificationIntegrationTest {
         mockMvc.perform(patch("/api/notifications/{id}/read", UUID.randomUUID()).with(asUser(userId))
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void unreadCount_returnsOnlyOwnUnreadNotifications() throws Exception {
+        UUID otherUser = UUID.randomUUID();
+        notificationService.handleTransactionCreated(createdEvent(userId, "100.00"));
+        notificationService.handleTransactionCreated(createdEvent(userId, "200.00"));
+        notificationService.handleTransactionCreated(createdEvent(otherUser, "300.00"));
+        notificationService.markAsRead(userId, idOf(userId));
+
+        mockMvc.perform(get("/api/notifications/unread-count").with(asUser(userId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(1));
+    }
+
+    @Test
+    void unreadCount_withoutAuth_returns401() throws Exception {
+        mockMvc.perform(get("/api/notifications/unread-count"))
+                .andExpect(status().isUnauthorized());
     }
 
     private TransactionCreatedEvent createdEvent(UUID owner, String amount) {
