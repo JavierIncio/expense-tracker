@@ -1,5 +1,6 @@
 server:
   port: 8080
+  shutdown: graceful
 
 spring:
   application:
@@ -35,6 +36,8 @@ spring:
               uri:  ${NOTIFICATION_SERVICE_URI:http://localhost:8083}
               predicates:
                 - Path=/api/notifications/**
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 management:
   endpoint:

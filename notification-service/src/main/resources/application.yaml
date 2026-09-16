@@ -1,5 +1,6 @@
 server:
   port: 8083
+  shutdown: graceful
 
 spring:
   application:
@@ -23,6 +24,8 @@ spring:
     host: ${SPRING_RABBITMQ_HOST:localhost}
     username: ${RABBITMQ_DEFAULT_USER:exptrack}
     password: ${RABBITMQ_DEFAULT_PASS:exptrack_password}
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 management:
   endpoint:

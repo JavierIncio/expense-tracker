@@ -57,6 +57,7 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+    stop_grace_period: 35s
 
   identity-service:
     build:
@@ -80,6 +81,7 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+    stop_grace_period: 35s
 
   expense-service:
     build:
@@ -106,6 +108,7 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+    stop_grace_period: 35s
 
   notification-service:
     build:
@@ -132,6 +135,7 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+    stop_grace_period: 35s
 
 volumes:
   postgres-data:

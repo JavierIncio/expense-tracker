@@ -509,7 +509,10 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 - [x] API documentation
 - [x] Docker Compose
 - [x] GitHub Actions
-- [ ] Production-ready configuration
+- [ ] Rate limiting (Bucket4j)
+- [ ] Structured logging and log levels
+- [x] Graceful shutdown
+- [ ] Monitoring (Micrometer + Prometheus + Grafana)
 
 ---
 
