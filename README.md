@@ -262,11 +262,28 @@ DELETE /api/budgets/{id}
 GET /api/summary/monthly?year=2026&month=9
 ```
 
+### Notifications
+
+```http
+GET   /api/notifications
+PATCH /api/notifications/{id}/read
+```
+
+Notifications are created asynchronously when the Notification Service consumes domain events and can be queried by the authenticated user.
+
 ---
 
 ## Event-Driven Communication
 
 Selected domain events are published through RabbitMQ.
+
+The Expense Service publishes to the `expense.events` topic exchange with the following routing keys:
+
+| Routing key           | Payload        |
+| --------------------- | -------------- |
+| `budget.exceeded`     | `BudgetExceededEvent`    |
+| `transaction.created` | `TransactionCreatedEvent` |
+| `transaction.deleted` | `TransactionDeletedEvent` |
 
 Example:
 
@@ -289,7 +306,7 @@ TransactionDeleted
 BudgetExceeded
 ```
 
-The messaging layer is intentionally limited to a small number of meaningful use cases.
+The Notification Service consumes these events from three durable queues bound to the exchange and persists notifications per user. The messaging layer is intentionally limited to a small number of meaningful use cases.
 
 ---
 
@@ -304,9 +321,9 @@ expense-tracker/
 │
 ├── identity-service/
 │
-├── expense-service/            # planned
+├── expense-service/
 │
-├── notification-service/       # planned
+├── notification-service/
 │
 ├── infrastructure/
 │   └── docker-compose.yaml
@@ -343,6 +360,8 @@ From the repository root, each service can be started independently:
 
 ```bash
 ./mvnw -pl identity-service spring-boot:run
+./mvnw -pl expense-service spring-boot:run
+./mvnw -pl notification-service spring-boot:run
 ./mvnw -pl gateway spring-boot:run
 ```
 
@@ -477,10 +496,10 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 
 ### Phase 6 — Messaging
 
-- [ ] RabbitMQ
-- [ ] Domain events
-- [ ] Notification Service
-- [ ] Budget exceeded notifications
+- [x] RabbitMQ
+- [x] Domain events
+- [x] Notification Service
+- [x] Budget exceeded notifications
 
 ### Phase 7 — Quality
 

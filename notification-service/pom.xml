@@ -7,9 +7,9 @@
         <artifactId>exptrack-parent</artifactId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>expense-service</artifactId>
-    <name>Expense Service</name>
-    <description>Expense service for the ExpenseTracker application</description>
+    <artifactId>notification-service</artifactId>
+    <name>Notification Service</name>
+    <description>Service for sending notifications</description>
     <url/>
     <licenses>
         <license/>
@@ -69,6 +69,7 @@
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator-test</artifactId>
@@ -115,18 +116,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <build>
         <plugins>

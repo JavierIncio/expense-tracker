@@ -6,17 +6,17 @@ Esta guía organiza las clases del monorepo **ExpenseTracker** agrupadas por **f
 
 ## Objetivo
 
-El proyecto es una aplicación web de finanzas personales construida con una arquitectura de microservicios (Java 25, Spring Boot 4.1, Maven). Solo dos servicios tienen código implementado hoy:
+El proyecto es una aplicación web de finanzas personales construida con una arquitectura de microservicios (Java 25, Spring Boot 4.1, Maven). Todos los servicios tienen código implementado:
 
 | Servicio               | Puerto | Estado       |
 | ---------------------- | ------ | ------------ |
 | `identity-service`     | 8081   | Implementado |
 | `gateway`              | 8080   | Implementado |
 | `expense-service`      | 8082   | Implementado |
-| `notification-service` | 8083   | Planificado  |
+| `notification-service` | 8083   | Implementado |
 | `frontend`             | 4200   | Implementado |
 
-El `notification-service` está **pendiente** (roadmap: Fase 6 del README). El `frontend` está **implementado** (Fases F1–F6 del `docs/guia-frontend.md` cerradas: scaffolding y tema, autenticación, dashboard, y CRUD de transacciones/categorías/presupuestos).
+El `notification-service` se implementó en la **Fase 6** del roadmap (mensajería asíncrona con RabbitMQ). El `frontend` está **implementado** (Fases F1–F6 del `docs/guia-frontend.md` cerradas: scaffolding y tema, autenticación, dashboard, y CRUD de transacciones/categorías/presupuestos).
 
 ---
 
@@ -133,6 +133,38 @@ Responsabilidad: respuestas HTTP consistentes y contrato de entrada/salida.
 | ---------------------------- | ----------------------- | ----------------------------------------------- |
 | `IdentityServiceApplication` | `identity-service/.../` | Arranque Spring Boot del servicio de identidad. |
 | `GatewayApplication`         | `gateway/.../`          | Arranque Spring Boot del gateway.               |
+| `ExpenseServiceApplication`  | `expense-service/.../`  | Arranque Spring Boot del servicio de gastos.    |
+| `NotificationServiceApplication` | `notification-service/.../` | Arranque Spring Boot del servicio de notificaciones. |
+
+### 9. Mensajería asíncrona (RabbitMQ)
+
+Responsabilidad: desacoplar el ciclo de vida de las transacciones/presupuestos de la creación de notificaciones.
+
+La **publicación** vive en `expense-service`:
+
+| Clase                              | Ubicación                       | Descripción                                                                                              |
+| ---------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `RabbitMQConfig`                   | `expense-service/.../config/`   | Declara el exchange topic `expense.events`, las 3 colas durable y sus bindings; usa JSON (`JacksonJsonMessageConverter`). |
+| `DomainEventPublisher`             | `expense-service/.../events/`   | Interfaz con `publishBudgetExceeded`, `publishTransactionCreated`, `publishTransactionDeleted`.          |
+| `RabbitMQDomainEventPublisher`     | `expense-service/.../events/`   | Implementación real de la interfaz: publica cada evento en el exchange con su routing key.               |
+| `BudgetExceededEvent` / `TransactionCreatedEvent` / `TransactionDeletedEvent` | `expense-service/.../events/` | Records JSON que viajan por el bus. |
+
+La **consumición** vive en `notification-service`:
+
+| Clase                        | Ubicación                            | Descripción                                                                               |
+| ---------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `RabbitMQConfig`             | `notification-service/.../config/`   | Re-declara las mismas colas/bindings del exchange `expense.events` (idempotente).          |
+| `NotificationEventListener`  | `notification-service/.../events/`   | Tres `@RabbitListener` (uno por cola) que delegan en `NotificationService`.                |
+| `NotificationService`        | `notification-service/.../service/`  | Persiste una `Notification` por evento; `list(userId, ...)` y `markAsRead(userId, id)` tenant-scoped. |
+| `Notification`               | `notification-service/.../domain/`   | Entidad JPA `notifications` (id, user_id, message, read, created_at).                     |
+| `NotificationController`     | `notification-service/.../web/`      | `GET /api/notifications` y `PATCH /api/notifications/{id}/read`, filtra por `X-User-Id`.  |
+
+**Puntos a tener en cuenta:**
+
+- Los records de eventos están **duplicados** entre `expense-service` y `notification-service` a propósito: no hay módulo compartido, el contrato se mantiene manualmente.
+- El nombre de cada cola es su routing key (`notification.transaction-created`, etc.); son **durables**, de modo que un reinicio del broker no pierde mensajes pendientes.
+- El consumidor confía en `X-User-*` (inyectadas por el gateway) y nunca filtra por *otro* usuario: `findAllByUserId` y `findByIdAndUserId`.
+- Credenciales del broker en `.env` (`RABBITMQ_DEFAULT_USER`/`RABBITMQ_DEFAULT_PASS`); las usan tanto la imagen de RabbitMQ en Compose como ambos servicios.
 
 ---
 
@@ -148,12 +180,12 @@ Responsabilidad: respuestas HTTP consistentes y contrato de entrada/salida.
 
 ## Pasos a seguir para extender el sistema
 
-1. **Implementar `expense-service`** (Fase 1 y 2 del roadmap): entidades `Transaction`, `Category`, `Budget`, CRUD, filtros, paginación y resumen mensual.
-2. **Enrutar en el gateway**: definir rutas de Spring Cloud Gateway para `/api/transactions`, `/api/categories`, `/api/budgets`, `/api/summary` hacia `:8082`.
-3. **Consumir las cabeceras de identidad** en el servicio de gastos: usar `X-User-Id` como referencia del propietario de cada transacción (no volver a pedir credenciales).
-4. **Mensajería (Fase 6)**: RabbitMQ para eventos `TransactionCreated`, `TransactionDeleted`, `BudgetExceeded` y el `notification-service`.
-5. **Frontend (Fase 5)**: aplicación Angular consumiendo el gateway.
-6. **Calidad (Fase 7)**: ampliar tests unitarios e integración (Testcontainers ya integrado).
+1. **Añadir un nuevo dominio**: crear la cadena habitual: entidad, repositorio, servicio, controlador y migración Flyway en el servicio correspondiente.
+2. **Añadir un nuevo evento**: crear el record en `expense-service/.../events/`, extender `DomainEventPublisher`/`RabbitMQDomainEventPublisher`, y añadir cola + `@RabbitListener` en `notification-service` (duplicando el record).
+3. **Enrutar en el gateway**: definir una ruta de Spring Cloud Gateway para el nuevo recurso hacia el puerto del servicio que corresponda.
+4. **Consumir las cabeceras de identidad**: en cada servicio interno, usar `X-User-Id` como referencia del propietario (no volver a pedir credenciales).
+5. **Frontend (Fase 5)**: aplicación Angular consumiendo el gateway (ya implementada).
+6. **Calidad (Fase 7)**: ampliar tests unitarios e integración (Testcontainers ya integrado) y configuración production-ready.
 
 ---
 
@@ -162,6 +194,6 @@ Responsabilidad: respuestas HTTP consistentes y contrato de entrada/salida.
 - **Secreto compartido**: identity y gateway deben compartir `APP_JWT_SECRET` y el mismo issuer.
 - **Duplicación intencionada**: `JwtService`, `RestAuthenticationEntryPoint` y `JwtAuthFilter` existen en ambos servicios; revisar ambos al tocar lógica de seguridad.
 - **.env**: los servicios resuelven su configuración desde `.env` de la raíz; lanzarlos desde la raíz del repo (`./mvnw -pl <servicio> spring-boot:run`).
-- **Módulos desactivados**: `expense-service` está comentado en el `pom.xml` raíz; activarlo cuando se implemente.
+- **Modulos activos**: el `pom.xml` raíz incluye `gateway`, `identity-service`, `expense-service` y `notification-service`.
 - **Passwords/tokens**: nunca registrar el token en claro; usar el hash SHA-256 ya implementado en `RefreshTokenService`.
 - **Unit tests**: este resumen no incluye `IdentityServiceApplicationTests` ni `GatewayApplicationTests` por ser pruebas de contexto vacías.

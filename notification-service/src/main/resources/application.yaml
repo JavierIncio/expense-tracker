@@ -1,9 +1,9 @@
 server:
-  port: 8082
+  port: 8083
 
 spring:
   application:
-    name: expense-service
+    name: notification-service
   config:
     import: "optional:file:.env[.properties]"
   datasource:
@@ -16,7 +16,7 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
-    table: expense_flyway_schema_history
+    table: notification_flyway_schema_history
     baseline-on-migrate: true
     baseline-version: 0
   rabbitmq:
@@ -28,4 +28,3 @@ management:
   endpoint:
     health:
       show-details: always
-
