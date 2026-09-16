@@ -31,7 +31,7 @@ public class GatewayRoutesConfig {
             @Value("${NOTIFICATION_SERVICE_URI:http://localhost:8083}") String notificationUri
     ) {
         return route("identity-service")
-                .route(req -> req.path().startsWith("/api/auth/"), http())
+                .route(req -> req.path().startsWith("/api/auth"), http())
                 .before(uri(identityUri))
                 .filter(rateLimit(c -> c.setCapacity(AUTH_RATE_LIMIT)
                         .setPeriod(Duration.ofMinutes(1))
@@ -40,7 +40,7 @@ public class GatewayRoutesConfig {
                 .build()
 
                 .and(route("expense-transactions")
-                        .route(req -> req.path().startsWith("/api/transactions/"), http())
+                        .route(req -> req.path().startsWith("/api/transactions"), http())
                         .before(uri(expenseUri))
                         .filter(rateLimit(c -> c.setCapacity(API_RATE_LIMIT)
                                 .setPeriod(Duration.ofMinutes(1))
@@ -49,7 +49,7 @@ public class GatewayRoutesConfig {
                         .build())
 
                 .and(route("expense-categories")
-                        .route(req -> req.path().startsWith("/api/categories/"), http())
+                        .route(req -> req.path().startsWith("/api/categories"), http())
                         .before(uri(expenseUri))
                         .filter(rateLimit(c -> c.setCapacity(API_RATE_LIMIT)
                                 .setPeriod(Duration.ofMinutes(1))
@@ -58,7 +58,7 @@ public class GatewayRoutesConfig {
                         .build())
 
                 .and(route("expense-budgets")
-                        .route(req -> req.path().startsWith("/api/budgets/"), http())
+                        .route(req -> req.path().startsWith("/api/budgets"), http())
                         .before(uri(expenseUri))
                         .filter(rateLimit(c -> c.setCapacity(API_RATE_LIMIT)
                                 .setPeriod(Duration.ofMinutes(1))
@@ -67,7 +67,7 @@ public class GatewayRoutesConfig {
                         .build())
 
                 .and(route("expense-summary")
-                        .route(req -> req.path().startsWith("/api/summary/"), http())
+                        .route(req -> req.path().startsWith("/api/summary"), http())
                         .before(uri(expenseUri))
                         .filter(rateLimit(c -> c.setCapacity(API_RATE_LIMIT)
                                 .setPeriod(Duration.ofMinutes(1))
@@ -76,7 +76,7 @@ public class GatewayRoutesConfig {
                         .build())
 
                 .and(route("notification-service")
-                        .route(req -> req.path().startsWith("/api/notifications/"), http())
+                        .route(req -> req.path().startsWith("/api/notifications"), http())
                         .before(uri(notificationUri))
                         .filter(rateLimit(c -> c.setCapacity(API_RATE_LIMIT)
                                 .setPeriod(Duration.ofMinutes(1))

@@ -31,14 +31,14 @@ class GatewayRoutesConfigTest {
 	@Test
 	void matchesExpenseServiceRoutes() {
 		assertThat(matches("/api/transactions/123")).isTrue();
-		assertThat(matches("/api/categories/")).isTrue();
-		assertThat(matches("/api/budgets/")).isTrue();
+		assertThat(matches("/api/categories")).isTrue();
+		assertThat(matches("/api/budgets")).isTrue();
 		assertThat(matches("/api/summary/monthly")).isTrue();
 	}
 
 	@Test
 	void matchesNotificationServiceRoutes() {
-		assertThat(matches("/api/notifications/")).isTrue();
+		assertThat(matches("/api/notifications")).isTrue();
 	}
 
 	@Test
