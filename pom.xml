@@ -67,5 +67,6 @@
         <module>gateway</module>
         <module>identity-service</module>
         <module>expense-service</module>
+        <module>notification-service</module>
     </modules>
 </project>

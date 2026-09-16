@@ -8,6 +8,8 @@ import com.exptrack.expense.dto.TransactionRequest;
 import com.exptrack.expense.dto.TransactionResponse;
 import com.exptrack.expense.events.BudgetExceededEvent;
 import com.exptrack.expense.events.DomainEventPublisher;
+import com.exptrack.expense.events.TransactionCreatedEvent;
+import com.exptrack.expense.events.TransactionDeletedEvent;
 import com.exptrack.expense.exceptions.CategoryNotFoundException;
 import com.exptrack.expense.exceptions.TransactionNotFoundException;
 import com.exptrack.expense.exceptions.TransactionTypeMismatchException;
@@ -36,7 +38,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -91,13 +92,14 @@ class TransactionServiceTest {
     }
 
     @Test
-    void create_expenseWithinBudget_doesNotPublish() {
+    void create_expenseWithinBudget_doesNotPublishBudgetEvent() {
         when(categoryRepo.findByIdAndUserId(categoryId, userId)).thenReturn(Optional.of(expenseCategory));
         when(budgetService.checkBudget(userId, categoryId, date)).thenReturn(Optional.empty());
 
         service.create(userId, request(TransactionType.EXPENSE, "80.00", null));
 
-        verifyNoInteractions(eventPublisher);
+        verify(eventPublisher, never()).publishBudgetExceeded(any());
+        verify(eventPublisher).publishTransactionCreated(any());
     }
 
     @Test
@@ -107,7 +109,21 @@ class TransactionServiceTest {
         service.create(userId, request(TransactionType.INCOME, "100.00", null));
 
         verify(budgetService, never()).checkBudget(any(), any(), any());
-        verifyNoInteractions(eventPublisher);
+        verify(eventPublisher, never()).publishBudgetExceeded(any());
+    }
+
+    @Test
+    void create_publishesTransactionCreatedEvent() {
+        when(categoryRepo.findByIdAndUserId(categoryId, userId)).thenReturn(Optional.of(expenseCategory));
+        when(budgetService.checkBudget(userId, categoryId, date)).thenReturn(Optional.empty());
+
+        service.create(userId, request(TransactionType.EXPENSE, "50.00", null));
+
+        ArgumentCaptor<TransactionCreatedEvent> captor = ArgumentCaptor.forClass(TransactionCreatedEvent.class);
+        verify(eventPublisher).publishTransactionCreated(captor.capture());
+        TransactionCreatedEvent event = captor.getValue();
+        assertThat(event.userId()).isEqualTo(userId);
+        assertThat(event.amount()).isEqualByComparingTo("50.00");
     }
 
     @Test
@@ -187,6 +203,22 @@ class TransactionServiceTest {
         service.delete(userId, transactionId);
 
         verify(transactionRepo).delete(t);
+    }
+
+    @Test
+    void delete_publishesTransactionDeletedEvent() {
+        UUID transactionIdToDelete = UUID.randomUUID();
+        Transaction t = new Transaction(userId, TransactionType.EXPENSE, new BigDecimal("50.00"), categoryId, date, null);
+        t.setId(transactionIdToDelete);
+        when(transactionRepo.findByIdAndUserId(transactionId, userId)).thenReturn(Optional.of(t));
+
+        service.delete(userId, transactionId);
+
+        ArgumentCaptor<TransactionDeletedEvent> captor = ArgumentCaptor.forClass(TransactionDeletedEvent.class);
+        verify(eventPublisher).publishTransactionDeleted(captor.capture());
+        TransactionDeletedEvent event = captor.getValue();
+        assertThat(event.userId()).isEqualTo(userId);
+        assertThat(event.transactionId()).isEqualTo(transactionIdToDelete);
     }
 
     @Test

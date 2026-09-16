@@ -7,6 +7,8 @@ import com.exptrack.expense.dto.TransactionFilter;
 import com.exptrack.expense.dto.TransactionRequest;
 import com.exptrack.expense.dto.TransactionResponse;
 import com.exptrack.expense.events.DomainEventPublisher;
+import com.exptrack.expense.events.TransactionCreatedEvent;
+import com.exptrack.expense.events.TransactionDeletedEvent;
 import com.exptrack.expense.exceptions.CategoryNotFoundException;
 import com.exptrack.expense.exceptions.TransactionNotFoundException;
 import com.exptrack.expense.exceptions.TransactionTypeMismatchException;
@@ -19,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -78,9 +81,9 @@ public class TransactionService {
     /**
      * Creates a new transaction for a given user based on the provided transaction request.
      *
-     * @param userId  the ID of the user for whom the transaction is to be created
+     * @param userId  the ID of the user
      * @param request the transaction request containing details of the transaction to create
-     * @return the TransactionResponse corresponding to the newly created transaction
+     * @return the TransactionResponse corresponding to the created transaction
      * @throws CategoryNotFoundException        if the specified category does not exist for the user
      * @throws TransactionTypeMismatchException if the transaction type does not match the category type
      */
@@ -101,6 +104,11 @@ public class TransactionService {
             budgetService.checkBudget(userId, request.categoryId(), request.date())
                     .ifPresent(eventPublisher::publishBudgetExceeded);
         }
+
+        eventPublisher.publishTransactionCreated(new TransactionCreatedEvent(
+                UUID.randomUUID(), t.getId(), t.getUserId(),
+                t.getType(), t.getAmount(), t.getCategoryId(),
+                Instant.now()));
 
         return toResponse(t);
     }
@@ -140,7 +148,7 @@ public class TransactionService {
     }
 
     /**
-     * Deletes a transaction for a given user by transaction ID.
+     * Deletes a specific transaction for a given user by transaction ID.
      *
      * @param userId        the ID of the user
      * @param transactionId the ID of the transaction to delete
@@ -150,6 +158,8 @@ public class TransactionService {
         Transaction t = transactionRepo.findByIdAndUserId(transactionId, userId)
                 .orElseThrow(() -> new TransactionNotFoundException(transactionId, userId));
         transactionRepo.delete(t);
+        eventPublisher.publishTransactionDeleted(new TransactionDeletedEvent(
+                UUID.randomUUID(), t.getId(), t.getUserId(), Instant.now()));
     }
 
     /**

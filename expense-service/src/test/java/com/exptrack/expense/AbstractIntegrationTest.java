@@ -11,6 +11,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.rabbitmq.RabbitMQContainer;
+import org.testcontainers.utility.DockerImageName;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -27,8 +29,12 @@ public abstract class AbstractIntegrationTest {
     static final PostgreSQLContainer POSTGRES =
             new PostgreSQLContainer("postgres:16-alpine");
 
+    static final RabbitMQContainer RABBITMQ =
+            new RabbitMQContainer(DockerImageName.parse("rabbitmq:latest"));
+
     static {
         POSTGRES.start();
+        RABBITMQ.start();
     }
 
     @DynamicPropertySource
@@ -36,6 +42,10 @@ public abstract class AbstractIntegrationTest {
         r.add("spring.datasource.url", POSTGRES::getJdbcUrl);
         r.add("spring.datasource.username", POSTGRES::getUsername);
         r.add("spring.datasource.password", POSTGRES::getPassword);
+        r.add("spring.rabbitmq.host", RABBITMQ::getHost);
+        r.add("spring.rabbitmq.port", RABBITMQ::getAmqpPort);
+        r.add("spring.rabbitmq.username", () -> "guest");
+        r.add("spring.rabbitmq.password", () -> "guest");
     }
 
     @Autowired protected MockMvc mockMvc;

@@ -18,6 +18,23 @@ services:
       timeout: 5s
       retries: 10
 
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: exptrack_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-exptrack}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-exptrack_password}
+    healthcheck:
+      test: [ "CMD-SHELL", "rabbitmq-diagnostics -q ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   gateway:
     build:
       context: ..
@@ -30,6 +47,7 @@ services:
     environment:
       IDENTITY_SERVICE_URI: http://identity-service:8081
       EXPENSE_SERVICE_URI: http://expense-service:8082
+      NOTIFICATION_SERVICE_URI: http://notification-service:8083
     depends_on:
       identity-service:
         condition: service_healthy
@@ -39,6 +57,7 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+    stop_grace_period: 35s
 
   identity-service:
     build:
@@ -62,6 +81,7 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+    stop_grace_period: 35s
 
   expense-service:
     build:
@@ -76,8 +96,11 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/exptrack_db
       SPRING_DATASOURCE_USERNAME: exptrack
       SPRING_DATASOURCE_PASSWORD: exptrack_password
+      SPRING_RABBITMQ_HOST: rabbitmq
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:8082/actuator/health" ]
@@ -85,6 +108,35 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+    stop_grace_period: 35s
+
+  notification-service:
+    build:
+      context: ..
+      dockerfile: notification-service/Dockerfile
+    container_name: exptrack_notification
+    ports:
+      - "8083:8083"
+    env_file:
+      - ../.env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/exptrack_db
+      SPRING_DATASOURCE_USERNAME: exptrack
+      SPRING_DATASOURCE_PASSWORD: exptrack_password
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8083/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    stop_grace_period: 35s
 
 volumes:
   postgres-data:
+  rabbitmq-data:

@@ -1,9 +1,12 @@
 server:
   port: 8082
+  shutdown: graceful
 
 spring:
   application:
     name: expense-service
+  config:
+    import: "optional:file:.env[.properties]"
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/exptrack_db}
     username: ${SPRING_DATASOURCE_USERNAME:exptrack}
@@ -17,6 +20,12 @@ spring:
     table: expense_flyway_schema_history
     baseline-on-migrate: true
     baseline-version: 0
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    username: ${RABBITMQ_DEFAULT_USER:exptrack}
+    password: ${RABBITMQ_DEFAULT_PASS:exptrack_password}
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 management:
   endpoint:
