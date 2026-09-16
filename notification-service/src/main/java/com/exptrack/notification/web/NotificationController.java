@@ -1,6 +1,7 @@
 package com.exptrack.notification.web;
 
 import com.exptrack.notification.dto.NotificationResponse;
+import com.exptrack.notification.dto.UnreadCountResponse;
 import com.exptrack.notification.security.UserPrincipal;
 import com.exptrack.notification.service.NotificationService;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,11 @@ public class NotificationController {
     public ResponseEntity<Page<NotificationResponse>> getNotifications(@AuthenticationPrincipal UserPrincipal user,
                                                                        Pageable pageable) {
         return ResponseEntity.ok(notificationService.list(user.userId(), pageable));
+    }
+
+    @GetMapping("/unread-count")
+    public ResponseEntity<UnreadCountResponse> getUnreadCount(@AuthenticationPrincipal UserPrincipal user) {
+        return ResponseEntity.ok(new UnreadCountResponse(notificationService.unreadCount(user.userId())));
     }
 
     @PatchMapping("/{id}/read")

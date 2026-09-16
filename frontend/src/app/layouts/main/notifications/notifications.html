@@ -1,0 +1,87 @@
+<div class="flex flex-col gap-6">
+  <header class="flex flex-wrap items-center justify-between gap-2">
+    <h2 class="text-xl font-semibold">Notificaciones</h2>
+  </header>
+
+  @if (loading() && !page()) {
+    <div class="skeleton h-48 w-full"></div>
+  }
+
+  @if (error(); as err) {
+    <app-error-alert [message]="err" [showRetry]="true" (retry)="load()" />
+  }
+
+  @if (page(); as page) {
+    <div class="overflow-x-auto">
+      <table class="table table-zebra">
+        <thead>
+          <tr>
+            <th>Mensaje</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (n of page.content; track n.id) {
+            <tr [class]="n.read ? '' : 'font-medium'">
+              <td class="max-w-md whitespace-normal">{{ n.message }}</td>
+              <td class="whitespace-nowrap">{{ formatDate(n.createdAt) }}</td>
+              <td>
+                @if (n.read) {
+                  <span class="badge badge-ghost badge-sm">Leída</span>
+                } @else {
+                  <span class="badge badge-warning badge-sm">No leída</span>
+                }
+              </td>
+              <td>
+                @if (!n.read) {
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-xs"
+                    [disabled]="markingId() === n.id"
+                    (click)="markRead(n)"
+                  >
+                    @if (markingId() === n.id) {
+                      <span class="loading loading-spinner loading-xs"></span>
+                    }
+                    Marcar leída
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="text-center text-base-content/60">
+                No tienes notificaciones.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex items-center justify-between">
+      <span class="text-sm text-base-content/60">
+        {{ page.numberOfElements }} de {{ page.totalElements }}
+      </span>
+      <div class="join">
+        <button
+          class="join-item btn btn-sm"
+          [disabled]="page.first"
+          (click)="goToPage(page.number - 1)"
+        >
+          <i class="fa-solid fa-angles-left"></i>
+        </button>
+        <button class="join-item btn btn-sm">{{ page.number + 1 }} / {{ page.totalPages }}</button>
+        <button
+          class="join-item btn btn-sm"
+          [disabled]="page.last"
+          (click)="goToPage(page.number + 1)"
+        >
+          <i class="fa-solid fa-angles-right"></i>
+        </button>
+      </div>
+    </div>
+  }
+</div>

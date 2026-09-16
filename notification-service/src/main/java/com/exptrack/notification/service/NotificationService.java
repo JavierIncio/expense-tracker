@@ -35,6 +35,10 @@ public class NotificationService {
          return notificationRepo.findAllByUserId(userID, pageable).map(this::toDto);
     }
 
+    public long unreadCount(UUID userId) {
+        return notificationRepo.countByUserIdAndReadFalse(userId);
+    }
+
     @Transactional
     public void markAsRead(UUID userID, UUID notificationId) {
         Notification notification = notificationRepo.findByIdAndUserId(notificationId, userID)

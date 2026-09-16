@@ -274,6 +274,7 @@ GET /api/summary/monthly?year=2026&month=9
 
 ```http
 GET   /api/notifications
+GET   /api/notifications/unread-count
 PATCH /api/notifications/{id}/read
 ```
 
@@ -539,6 +540,7 @@ The architecture intentionally avoids unnecessary complexity such as CQRS, Event
 - [x] Transaction management
 - [x] Categories
 - [x] Budgets
+- [x] Notifications
 
 ### Phase 6 — Messaging
 
