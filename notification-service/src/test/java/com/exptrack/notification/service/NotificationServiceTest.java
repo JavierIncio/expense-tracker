@@ -119,8 +119,22 @@ class NotificationServiceTest {
         Notification saved = captor.getValue();
         assertThat(saved.getUserId()).isEqualTo(userId);
         assertThat(saved.getRead()).isFalse();
-        assertThat(saved.getMessage()).contains("Transaction with ID")
-                .contains("50.00");
+        assertThat(saved.getMessage()).contains("gasto")
+                .contains("50,00");
+    }
+
+    @Test
+    void handleTransactionCreated_income_usesIngresoWording() {
+        TransactionCreatedEvent event = new TransactionCreatedEvent(
+                UUID.randomUUID(), UUID.randomUUID(), userId, TransactionType.INCOME,
+                new BigDecimal("250.00"), UUID.randomUUID(), Instant.now());
+
+        service.handleTransactionCreated(event);
+
+        ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
+        verify(notificationRepo).save(captor.capture());
+        assertThat(captor.getValue().getMessage()).contains("ingreso")
+                .contains("250,00");
     }
 
     @Test
@@ -134,7 +148,7 @@ class NotificationServiceTest {
         verify(notificationRepo).save(captor.capture());
         assertThat(captor.getValue().getUserId()).isEqualTo(userId);
         assertThat(captor.getValue().getRead()).isFalse();
-        assertThat(captor.getValue().getMessage()).contains("Transaction with ID");
+        assertThat(captor.getValue().getMessage()).isEqualTo("Se eliminó una transacción.");
     }
 
     @Test
@@ -150,7 +164,8 @@ class NotificationServiceTest {
         Notification saved = captor.getValue();
         assertThat(saved.getUserId()).isEqualTo(userId);
         assertThat(saved.getRead()).isFalse();
-        assertThat(saved.getMessage()).contains("Budget for")
-                .contains("150.00");
+        assertThat(saved.getMessage()).contains("Septiembre")
+                .contains("2026")
+                .contains("150,00");
     }
 }

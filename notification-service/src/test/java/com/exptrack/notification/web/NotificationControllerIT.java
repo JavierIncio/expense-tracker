@@ -41,7 +41,7 @@ class NotificationControllerIT extends AbstractNotificationIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].read").value(false))
-                .andExpect(jsonPath("$.content[0].message").value(containsString("100.00")));
+                .andExpect(jsonPath("$.content[0].message").value(containsString("100,00")));
     }
 
     @Test
