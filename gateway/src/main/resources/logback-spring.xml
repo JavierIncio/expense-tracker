@@ -4,8 +4,9 @@
             <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
         </springProfile>
         <springProfile name="!prod">
-            <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
-            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder"/>
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+            </encoder>
         </springProfile>
     </appender>
     <root level="WARN">
