@@ -31,3 +31,8 @@ management:
   endpoint:
     health:
       show-details: always
+
+logging:
+  level:
+    com.exptrack: INFO
+    org.hibernate.SQL: WARN

@@ -27,6 +27,11 @@ management:
     health:
       show-details: always
 
+logging:
+  level:
+    com.exptrack: INFO
+    org.hibernate.SQL: WARN
+
 app:
   jwt:
     secret: ${APP_JWT_SECRET}
